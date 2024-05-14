@@ -7,9 +7,9 @@ import { User } from './user';
 import { NavItem } from './nav-item';
 
 export const metadata = {
-    title: 'Next.js App Router + NextAuth + Tailwind CSS',
+    title: 'Khaata Online - Three Star Sanitory Store ',
     description:
-        'A user admin dashboard configured with Next.js, Postgres, NextAuth, Tailwind CSS, TypeScript, and Prettier.'
+        'A system to help you manage your shop easily.'
 };
 
 export default function RootLayout({

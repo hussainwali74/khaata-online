@@ -1,11 +1,11 @@
 // 'use client'
 // import { getUsers } from '@/lib/db';
-import { UsersTable } from './users-table';
-import { Search } from './search';
 // import { useState, useEffect } from 'react'
-import { UserInterface } from './models/interfaces';
+import TopNav from '@/components/admin/top_nav';
 import { Button } from '@/components/ui/button';
-import TopNav from '../components/admin/top_nav';
+import { UserInterface } from '../models/interfaces';
+import { Search } from '../search';
+import { UsersTable } from '../users-table';
 
 export default async function IndexPage({
     searchParams
@@ -27,7 +27,7 @@ export default async function IndexPage({
     // }, [])
     // const { users, newOffset } = await getUsers(search, Number(offset));
     return (
-        <main className="flex flex-1 flex-col p-4 md:p-6">
+        <main className="flex flex-1 flex-col ">
             <TopNav />
             <div className="w-full mb-4">
                 <Search value={searchParams.q} />
