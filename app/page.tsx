@@ -1,4 +1,4 @@
-// 'use client'
+'use client'
 // import { getUsers } from '@/lib/db';
 import { UsersTable } from './users-table';
 import { Search } from './search';
@@ -6,8 +6,9 @@ import { Search } from './search';
 import { UserInterface } from './models/interfaces';
 import { Button } from '@/components/ui/button';
 import TopNav from '../components/admin/top_nav';
+import { useRouter } from 'next/navigation';
 
-export default async function IndexPage({
+export default function IndexPage({
     searchParams
 }: {
     searchParams: { q: string; offset: string };
@@ -15,6 +16,8 @@ export default async function IndexPage({
     // const search = searchParams.q ?? '';
     // const offset = searchParams.offset ?? 0;
     // const [users, setUsers] = useState<UserInterface[]>([]);
+    const router = useRouter()
+
     const users_temp_data: UserInterface[] = [
         { id: 1, name: "akbar", contact_no: "031357575757", cnic: "7172727272727", address: "golodas" },
         { id: 2, name: "akbar1", contact_no: "031457575757", cnic: "7272727272727", address: "sil gol das ghiz kkaakk" },
