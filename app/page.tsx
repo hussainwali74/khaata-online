@@ -1,12 +1,12 @@
 'use client'
 // import { getUsers } from '@/lib/db';
-import { UsersTable } from './users-table';
 import { Search } from './search';
 // import { useState, useEffect } from 'react'
 import { UserInterface } from './models/interfaces';
-import { Button } from '@/components/ui/button';
-import TopNav from '../components/admin/top_nav';
 import { useRouter } from 'next/navigation';
+import TopNav from 'my_components/admin/top_nav';
+import UsersTable from './users-table';
+import { CustomerInterface } from './models/customer.models';
 
 export default function IndexPage({
     searchParams
@@ -18,24 +18,11 @@ export default function IndexPage({
     // const [users, setUsers] = useState<UserInterface[]>([]);
     const router = useRouter()
 
-    const users_temp_data: UserInterface[] = [
-        { id: 1, name: "akbar", contact_no: "031357575757", cnic: "7172727272727", address: "golodas" },
-        { id: 2, name: "akbar1", contact_no: "031457575757", cnic: "7272727272727", address: "sil gol das ghiz kkaakk" },
-        { id: 3, name: "akbar2", contact_no: "031557575757", cnic: "7372727272727", address: "golodas dfds" },
-        { id: 4, name: "akbar3", contact_no: "031657575757", cnic: "7472727272727", address: "golodas dssds" },
-        { id: 5, name: "akbar4", contact_no: "031757575757", cnic: "7572727272727", address: "golodas daaas" }
-    ]
-    // useEffect(() => {
-    //     setUsers(users_temp_data)
-    // }, [])
-    // const { users, newOffset } = await getUsers(search, Number(offset));
     return (
-        <main className="flex flex-1 flex-col p-4 md:p-6">
+        <main className="flex flex-1 flex-col p-4 md:p-6 ">
             <TopNav />
-            <div className="w-full mb-4">
-                <Search value={searchParams.q} />
-            </div>
-            <UsersTable users={users_temp_data} offset={0} />
+
+            <UsersTable />
         </main>
     );
 }

@@ -1,0 +1,55 @@
+we are building a khata app, it is an accounts management app for small businesses. shopkeepers mainly.
+for lets keep it simple, we will start with the following features:
+Invoice is one of the core features of the Khata app. The admin portal for shopkeepers will have the following features:
+
+1. Customer Management:
+   - CRUD operations for customers
+   - Search functionality: Single search field to find customers by CNIC, phone number, name, or address
+
+2. Product Management:
+   - CRUD operations for products
+   - Product details: images, price, title, description, etc.
+
+3. Main Dashboard:
+   - List of customers with their remaining balance
+   - Beautiful table displaying:
+     - Customer information
+     - Purchase amounts
+     - Payment status
+     - Action button (for printing invoice)
+
+4. Invoice Generation:
+   - Create new invoices for customer purchases
+   - Handle item returns and new purchases in a single transaction
+   - Reflect accurate current state of customer's account
+   - Option to apply percentage discount
+   - Printable invoice format
+
+5. Transaction Handling:
+   - Record new purchases
+   - Process item returns
+   - Update customer balance
+
+6. Real-time Updates:
+   - System always reflects the correct state of customer accounts and inventory
+
+7. Reporting:
+   - Generate reports on sales, inventory, and customer accounts
+
+8. User-friendly Interface:
+   - Intuitive design for easy navigation and quick data entry
+   - Responsive layout for various device sizes
+
+9. Data Security:
+   - Secure storage of customer and transaction data
+   - User authentication and authorization
+
+10. Backup and Restore:
+    - Regular data backups
+    - Option to restore data if needed
+
+This comprehensive set of features will provide shopkeepers with an efficient tool for managing their accounts, inventory, and customer relationships.
+
+use nextjs, tailwindcss, shadcn, neondb, drizzle, nextauth, clerk.
+i will provide you with all the required information from the external sources like API keys, database credentials, etc.
+also you can ask me for clarification at any stage.

@@ -1,150 +1,148 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { toast } from "sonner"
 import axios from 'axios';
-import { CustomerInterface } from '../../models/interfaces';
+import { useRouter } from 'next/navigation';
+
+import {
+    Form, FormItem, FormField, FormLabel,
+    FormControl,
+    FormDescription,
+    FormMessage
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Toaster } from "@/components/ui/sonner"
+
+const formSchema = z.object({
+    name: z.string().min(5).max(50, { message: "name cannot be more than 50 characters.", }),
+    address: z.string().min(5).max(50),
+    contact_number: z.string().min(11).max(13),
+    cnic: z.string().max(14).optional(),
+})
 
 export default function Customer() {
-  const [customerData, setCustomerData] = useState<CustomerInterface | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+    // 1. Define your form.
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: "",
+            address: "",
+            contact_number: "",
+            cnic: "",
+        },
+    })
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://localhost:40/api/customer');
-        setCustomerData(response.data);
-      } catch (error) {
-        console.error('Error fetching customer data', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (customerData) {
-      setCustomerData({ ...customerData, [name]: value });
+    const router = useRouter()
+    function onCancel() {
+        router.back()
     }
-  };
 
-  const handleUpdate = async () => {
-    try {
-      await axios.put('http://localhost:40/api/customer', customerData);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating customer data', error);
+    async function onSubmitHandler(values: z.infer<typeof formSchema>) {
+        try {
+            console.log(`customerDetails :>>`, values)
+            console.log('-----------------------------------------------------')
+            const res = await axios.post('http://localhost:8000/api/shop/customers/', values);
+            console.log('-----------------------------------------------------')
+            console.log(`res :>>`, res)
+            console.log('-----------------------------------------------------')
+            toast.info("Customer details added", {
+                description: "you can now create invoices for the customer",
+                action: {
+                    label: "x",
+                    onClick: () => toast.dismiss(),
+                },
+            })
+        } catch (error) {
+            console.error('Error saving bill data', error);
+        }
     }
-  };
 
-  if (!customerData) return <div>Loading...</div>;
 
-  return (
-    <>
-      <div className="px-4 sm:px-0 justify-between flex">
-        <div>
-          <h3 className="text-base font-semibold leading-7 text-gray-900">Customer Information</h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Personal details and bill details.</p>
+    return (
+        <div className="mx-auto max-w-6xl print-margins">
+            <div className="px-4 sm:px-0">
+                <h3 className="text-base font-semibold leading-7 text-gray-900">Add new Customer </h3>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Customer Personal details.</p>
+            </div>
+
+            <div className="mt-6 pt-5 border-t border-gray-100">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmitHandler)} className="space-y-8">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="enter customer name here" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Customer full name.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Address</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="enter customer address here" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Customer Address.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="cnic"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>CNIC</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="enter customer cnic here" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Customer cnic.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="contact_number"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Contact Number</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="enter customer Contact Number here" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Customer Contact Number.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="gap-2 flex  w-full">
+                            <Button type="submit" className="w-1/2 bg-green-500">Submit</Button>
+                            <Button type="button" onClick={() => onCancel()} className="w-1/2 bg-slate-400">Cancel</Button>
+                        </div>
+                    </form>
+                </Form>
+            </div>
+            <Toaster richColors />
         </div>
-        <div className="bg-green-200 text-amber-50 font- p-2 w-1/4 rounded">
-          <h3 className="text-base font-semibold leading-7 text-gray-600">Amount Due</h3>
-          {isEditing ? (
-            <input
-              type="text"
-              name="amountDue"
-              value={customerData.amountDue}
-              onChange={handleInputChange}
-              className="mt-1 max-w-2xl text-sm font-medium leading-6 text-black"
-            />
-          ) : (
-            <p className="mt-1 max-w-2xl text-sm font-medium leading-6 text-black">{customerData.amountDue}</p>
-          )}
-        </div>
-      </div>
-      <div className="mt-6 border-t border-gray-100">
-        <dl className="divide-y divide-gray-100">
-          <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt className="text-sm font-medium leading-6 text-gray-900">Name</dt>
-            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="name"
-                  value={customerData.name}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              ) : (
-                customerData.name
-              )}
-            </dd>
-          </div>
-          <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt className="text-sm font-medium leading-6 text-gray-900">Address</dt>
-            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="address"
-                  value={customerData.address}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              ) : (
-                customerData.address
-              )}
-            </dd>
-          </div>
-          <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt className="text-sm font-medium leading-6 text-gray-900">CNIC</dt>
-            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="cnic"
-                  value={customerData.cnic}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              ) : (
-                customerData.cnic
-              )}
-            </dd>
-          </div>
-          <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt className="text-sm font-medium leading-6 text-gray-900">Phone Number</dt>
-            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="phoneNumber"
-                  value={customerData.phoneNumber}
-                  onChange={handleInputChange}
-                  className="w-full"
-                />
-              ) : (
-                customerData.phoneNumber
-              )}
-            </dd>
-          </div>
-        </dl>
-        <div className="px-4 py-6 sm:px-0">
-          {isEditing ? (
-            <button
-              onClick={handleUpdate}
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
-            >
-              Update
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
-            >
-              Edit
-            </button>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+    );
+};

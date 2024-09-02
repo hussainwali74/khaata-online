@@ -28,7 +28,7 @@ const Bill = () => {
     }, [])
 
     return (
-        <div className=" max-w-full pb-12 pt-2 sm:px-2 ">
+        <div className="max-w-full pb-12 pt-2 sm:px-2">
             <style>
                 {`
           @media print {

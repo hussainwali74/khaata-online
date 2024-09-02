@@ -9,9 +9,9 @@ const fontSans = FontSans({
 
 import Link from 'next/link';
 import { Analytics } from '@vercel/analytics/react';
-import { Logo, SettingsIcon, UsersIcon, VercelLogo } from '@/components/icons';
 import { User } from './user';
 import { NavItem } from './nav-item';
+import { Logo, SettingsIcon, UsersIcon } from 'my_components/icons';
 
 export const metadata = {
     title: 'Khaata Online - Three Star Sanitory Store ',
@@ -25,9 +25,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className="h-full bg-gray-50" suppressHydrationWarning>
+        <html lang="en" className="h-full w-full" suppressHydrationWarning>
             <body className={cn(
-                "min-h-screen bg-background font-sans antialiased",
+                "min-h-screen bg-background  font-sans antialiased",
                 fontSans.variable
             )}>
                 <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">

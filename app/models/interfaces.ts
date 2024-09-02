@@ -1,3 +1,5 @@
+import { ColumnDef } from "@tanstack/react-table";
+
 export interface UserInterface {
     id: number,
     name: string,
@@ -5,10 +7,8 @@ export interface UserInterface {
     cnic: string,
     address: string
 }
-export  interface  CustomerInterface {
-  name: string;
-  address: string;
-  cnic: string;
-  phoneNumber: string;
-  amountDue: string;
-};
+
+export interface DataTablePropsInterface<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[]
+}
