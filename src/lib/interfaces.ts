@@ -9,15 +9,28 @@ export interface InvoiceItemInterface {
 }
 
 export interface InvoiceInterface {
-  invoiceId?: number;
-  items: InvoiceItemInterface[];
+  id: number;
+  customerId: number;
   customerName: string;
   customerAddress: string;
+  invoiceId: number;
   invoiceDate: string;
   dueDate: string;
+  items: InvoiceItemInterface[];
+  totalAmount: number | string;
+  paymentReceived: number | string;
+  remainingAmount: number | string;
+  discountAmount: string | null;
+  discountPercentage: string | null;
+  status: 'paid' | 'amount due';
   shopName: string;
   shopAddress: string;
-  discount_amount: number;
-  discount_percentage: number;
-  totalAmount: number;
+}
+
+export interface CustomerInterface {
+  id: number;
+  name: string;
+  cnic?: string;
+  phoneNumber?: string;
+  address?: string;
 }

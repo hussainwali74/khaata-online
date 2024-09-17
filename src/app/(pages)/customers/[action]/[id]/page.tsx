@@ -57,23 +57,31 @@ export default function CustomerForm({ params }: { params: { action: string; id:
     try {
       const url = params.action === 'edit' ? `/api/customers/${params.id}` : '/api/customers';
       const method = params.action === 'edit' ? 'PUT' : 'POST';
+      
+      // Log the data being sent
+      console.log('Sending data:', customer);
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(customer),
       });
+      
       if (!response.ok) {
-        throw new Error(`Failed to ${params.action} customer`);
+        const errorData = await response.json();
+        throw new Error(`Failed to ${params.action} customer: ${errorData.message || response.statusText}`);
       }
+      
       toast({
         title: "Success",
         description: `Customer ${params.action === 'edit' ? 'updated' : 'created'} successfully.`,
       });
       router.push('/customers');
     } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: `Failed to ${params.action} customer. Please try again.`,
+        description: error instanceof Error ? error.message : `Failed to ${params.action} customer. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -82,7 +90,7 @@ export default function CustomerForm({ params }: { params: { action: string; id:
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <>
       <h1 className="text-2xl font-bold mb-4">{params.action === 'edit' ? 'Edit' : 'Add'} Customer</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -121,6 +129,6 @@ export default function CustomerForm({ params }: { params: { action: string; id:
           </Button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

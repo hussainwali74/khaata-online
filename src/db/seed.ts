@@ -50,7 +50,7 @@ const main = async () => {
         shopId: shop.id, 
         name: faker.commerce.productName(), 
         description: faker.commerce.productDescription(), 
-        price: parseInt(faker.commerce.price()), // Changed to parseInt
+        price: parseInt(faker.commerce.price()), 
         imageUrl: faker.image.url(), 
         quantity: faker.number.int({ min: 1, max: 100 }) 
       },
@@ -58,7 +58,7 @@ const main = async () => {
         shopId: shop.id, 
         name: faker.commerce.productName(), 
         description: faker.commerce.productDescription(), 
-        price: parseInt(faker.commerce.price()), // Changed to parseInt
+        price: parseInt(faker.commerce.price()), 
         imageUrl: faker.image.url(), 
         quantity: faker.number.int({ min: 1, max: 100 }) 
       },
@@ -66,7 +66,7 @@ const main = async () => {
         shopId: shop.id, 
         name: faker.commerce.productName(), 
         description: faker.commerce.productDescription(), 
-        price: parseInt(faker.commerce.price()), // Changed to parseInt
+        price: parseInt(faker.commerce.price()), 
         imageUrl: faker.image.url(), 
         quantity: faker.number.int({ min: 1, max: 100 }) 
       },
@@ -83,14 +83,21 @@ const main = async () => {
 
     for (let i = 0; i < 5; i++) {
       const customerId = faker.helpers.arrayElement(shopCustomers).id;
+      const discountAmount = faker.number.float({ min: 0, max: 100, precision: 0.01 });
+      const discountPercentage = faker.number.float({ min: 0, max: 20, precision: 0.01 });
+      const dueDate = faker.date.future();
+      const status = faker.helpers.arrayElement(['pending', 'paid', 'cancelled']);
+
       const [invoice] = await db.insert(schema.invoices).values({
         shopId: shop.id,
         customerId,
-        status: faker.helpers.arrayElement(['pending', 'paid', 'cancelled']),
-        totalAmount: 0,
-        discount_amount: faker.number.float({ min: 0, max: 100, precision: 0.01 }),
-        discount_percentage: faker.number.float({ min: 0, max: 20, precision: 0.01 }),
-        dueDate: faker.date.future(),
+        totalAmount: '0', // Initialize with '0', will update later
+        paymentReceived: '0',
+        remainingAmount: '0',
+        discountAmount: discountAmount.toFixed(2),
+        discountPercentage: discountPercentage.toFixed(2),
+        dueDate,
+        status,
       }).returning();
 
       let totalAmount = 0;
@@ -106,14 +113,26 @@ const main = async () => {
           invoiceId: invoice.id,
           productId,
           quantity,
-          unitPrice: unitPrice.toString(), // Convert to string
+          unitPrice: unitPrice.toString(),
         });
 
         totalAmount += unitPrice * quantity;
       }
 
+      // Apply discount
+      const discountedAmount = totalAmount - discountAmount;
+      const finalAmount = discountedAmount * (1 - discountPercentage / 100);
+
+      // Simulate payment received
+      const paymentReceived = status === 'paid' ? finalAmount : faker.number.float({ min: 0, max: finalAmount, precision: 0.01 });
+      const remainingAmount = finalAmount - paymentReceived;
+
       await db.update(schema.invoices)
-        .set({ totalAmount: totalAmount })
+        .set({ 
+          totalAmount: finalAmount.toFixed(2),
+          paymentReceived: paymentReceived.toFixed(2),
+          remainingAmount: remainingAmount.toFixed(2),
+        })
         .where(eq(schema.invoices.id, invoice.id));
     }
   }

@@ -57,11 +57,13 @@ export const invoices = pgTable("invoices", {
   customerId: integer("customer_id")
     .notNull()
     .references(() => customers.id),
-  discount_amount: doublePrecision("discount_amount").default(0.0),
-  discount_percentage: doublePrecision("discount_percentage").default(0.0),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  paymentReceived: decimal("payment_received", { precision: 10, scale: 2 }).default('0'),
+  remainingAmount: decimal("remaining_amount", { precision: 10, scale: 2 }).default('0'),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default('0'),
   dueDate: timestamp("due_date"),
-  totalAmount: doublePrecision   ("total_amount").notNull(),
-  status: text("status").notNull().default("pending"),
+  status: text("status").notNull().default('pending'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

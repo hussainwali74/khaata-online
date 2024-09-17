@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { invoices, invoiceItems, customers, shops, productsSchema } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
+import { calculateInvoiceStatus } from '@/lib/invoiceHelpers';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -29,6 +30,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return new NextResponse("Customer or Shop not found", { status: 404 });
     }
 
+    const subtotal = items.reduce((acc, item) => acc + parseFloat(item.invoiceItems.unitPrice) * item.invoiceItems.quantity, 0);
+    const discountAmount = parseFloat(invoice[0].discountAmount || '0');
+    const totalAmount = subtotal - discountAmount;
+    const paymentReceived = parseFloat(invoice[0].paymentReceived || '0');
+    const remainingAmount = totalAmount - paymentReceived;
+
     const invoiceData = {
       items: items.map((item) => ({
         id: item.invoiceItems.id,
@@ -44,11 +51,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
       customerAddress: customer[0].address || "",
       invoiceDate: invoice[0].createdAt?.toISOString().split("T")[0] || "",
       invoiceId: invoice[0].id,
-      dueDate: invoice[0].dueDate ? invoice[0].dueDate.toISOString().split("T")[0] : "",
-      discount_amount: invoice[0].discount_amount,
-      discount_percentage: invoice[0].discount_percentage,
+      dueDate: invoice[0].dueDate ? invoice[0].dueDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      discountAmount: invoice[0].discountAmount, // Changed from discount_amount
+      discountPercentage: invoice[0].discountPercentage, // Changed from discount_percentage
       shopName: shop[0].name || "",
       shopAddress: shop[0].address || "",
+      totalAmount: totalAmount.toString(),
+      paymentReceived: paymentReceived.toString(),
+      remainingAmount: remainingAmount.toString(),
+      status: invoice[0].status || 'amount due', // Add this line
     };
 
     return NextResponse.json(invoiceData);
@@ -69,22 +80,25 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   console.log("---------------------------------------------------");
   console.log("body", body);
   console.log("---------------------------------------------------");
-  const { customerId, status, items, shopId, discount_amount, dueDate, discount_percentage } = body;
+  const { customerId, status, items, shopId, discountAmount, dueDate, discountPercentage, paymentReceived, remainingAmount, totalAmount } = body;
 
   try {
-    // Convert dueDate string to Date object
     const dueDateObject = dueDate ? new Date(dueDate) : null;
+    const calculatedStatus = calculateInvoiceStatus(parseFloat(totalAmount), parseFloat(paymentReceived));
 
     // Update the invoice
     await db
       .update(invoices)
       .set({
         customerId,
-        status,
-        discount_percentage: discount_percentage,
-        discount_amount: discount_amount,
+        status: calculatedStatus,
+        discountPercentage,
+        discountAmount,
         dueDate: dueDateObject,
         shopId,
+        paymentReceived,
+        remainingAmount,
+        totalAmount,
       })
       .where(eq(invoices.id, invoiceId))
       .execute();
@@ -93,7 +107,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId)).execute();
 
     // Add new items
-    let totalAmount = 0;
+    let calculatedTotalAmount = 0;
     for (const item of items) {
       const [product] = await db.select().from(productsSchema).where(eq(productsSchema.id, item.productId));
       if (!product) {
@@ -107,16 +121,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         unitPrice: item.price.toString(),
       });
 
-      totalAmount += item.price * item.quantity;
+      calculatedTotalAmount += item.price * item.quantity;
     }
 
     // Calculate discounted total
-    const discountedTotal = totalAmount - (discount_amount || 0);
+    const discountedTotal = calculatedTotalAmount - (parseFloat(discountAmount) || 0);
 
     // Update the invoice total amount
     const [updatedInvoice] = await db
       .update(invoices)
-      .set({ totalAmount: discountedTotal })
+      .set({ totalAmount: discountedTotal.toString() })
       .where(eq(invoices.id, invoiceId))
       .returning();
 

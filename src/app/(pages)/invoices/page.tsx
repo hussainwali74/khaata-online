@@ -117,7 +117,7 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <>
       <div className="flex-none p-4 bg-white shadow-md">
         <h1 className="text-2xl font-bold mb-4 hidden md:block">Invoice Management</h1>
         <Search link="/invoices/create" onSearch={handleSearch} />
@@ -193,6 +193,6 @@ export default function InvoicesPage() {
           onItemsPerPageChange={handleItemsPerPageChange}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { getShopIdForCurrentUser } from '@/app/actions/shopActions';
-import DashboardComponent from './dashboard_component';
+import Dashboard from '@/app/page';
 export default function DashboardPage() {
   const [hasShop, setHasShop] = useState<boolean | null>(null);
   const { isLoaded, userId } = useAuth();
@@ -34,9 +34,6 @@ export default function DashboardPage() {
   const checkUserShop = async () => {
     try {
       const response = await fetch('/api/user-shop');
-      console.log('---------------------------------------------------');
-      console.log('response of user shop', response);
-      console.log('---------------------------------------------------');
       if (response.ok) {
         setHasShop(true);
       } else {
@@ -60,6 +57,6 @@ export default function DashboardPage() {
 
   // Your existing dashboard content
   return (
-    <DashboardComponent/>
+    <Dashboard />
 );
 }

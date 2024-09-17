@@ -83,8 +83,8 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
+        <TabsList className="w-full bg-slate-300">
           <TabsTrigger className="w-full" value="profile">Profile</TabsTrigger>
           <TabsTrigger className="w-full" value="shop">Shop Settings</TabsTrigger>
         </TabsList>

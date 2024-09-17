@@ -47,9 +47,9 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
+    <div className="container mx-auto p-4 max-w-2xl  justify-center items-center lg:mt-36 mt-2">
       <h1 className="text-2xl font-bold mb-4">Create Your Shop</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 justify-center items-center">
         <div>
           <label htmlFor="shopName" className="block text-sm font-medium text-gray-700">
             Shop Name

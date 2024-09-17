@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { customerId, shopId, items } = body;
+  const { customerId, shopId, items, dueDate, discountAmount, discountPercentage } = body;
 
   try {
     // Verify that the shopId from the request matches the user's shop
@@ -51,20 +51,38 @@ export async function POST(request: Request) {
       return new NextResponse("Invalid shop ID", { status: 400 });
     }
 
+    // Calculate total amount
+    let invoiceTotal = 0;
+    for (const item of items) {
+      const [product] = await db.select().from(productsSchema).where(eq(productsSchema.id, item.productId));
+      if (!product) {
+        throw new Error(`Product with id ${item.productId} not found`);
+      }
+      invoiceTotal += product.price * item.quantity;
+    }
+
+    // Apply discount
+    const discountedAmount = invoiceTotal - (discountAmount || 0);
+    const finalAmount = discountedAmount * (1 - (discountPercentage || 0) / 100);
+
     // Create the invoice
     const [invoice] = await db.insert(invoices)
       .values({
         customerId,
         shopId,
-        totalAmount: 0,
+        totalAmount: finalAmount.toFixed(2),
+        paymentReceived: '0',
+        remainingAmount: finalAmount.toFixed(2),
+        discountAmount: (discountAmount || 0).toFixed(2),
+        discountPercentage: (discountPercentage || 0).toFixed(2),
+        dueDate: dueDate ? new Date(dueDate) : null,
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .returning();
 
-    // Add invoice items and calculate total amount
-    let totalAmount = 0;
+    // Add invoice items
     for (const item of items) {
       const [product] = await db.select().from(productsSchema).where(eq(productsSchema.id, item.productId));
       if (!product) {
@@ -74,24 +92,13 @@ export async function POST(request: Request) {
         invoiceId: invoice.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: product.price.toString(), // Convert price to string
+        unitPrice: product.price.toString(),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
-      totalAmount += product.price * item.quantity;
     }
 
-    // Update the invoice total amount
-    const [updatedInvoice] = await db.update(invoices)
-      .set({ 
-        totalAmount: parseFloat(totalAmount.toFixed(2))!,
-        updatedAt: new Date(),
-      })
-      .where(eq(invoices.id, invoice.id))
-      .returning();
-
-    return NextResponse.json(updatedInvoice);
+    return NextResponse.json(invoice);
   } catch (error) {
     console.error('Error creating invoice:', error);
     return new NextResponse("Error creating invoice", { status: 500 });

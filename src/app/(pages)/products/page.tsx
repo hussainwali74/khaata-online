@@ -131,7 +131,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <>
       <div className="flex-none p-4 bg-white shadow-md">
         <h1 className="text-2xl font-bold mb-4 hidden md:block">Product Management</h1>
         <div className="flex flex-col sm:flex-row mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
@@ -273,6 +273,6 @@ export default function ProductsPage() {
           <Loader2 className="w-8 h-8 animate-spin text-white" />
         </div>
       )}
-    </div>
+    </>
   );
 }

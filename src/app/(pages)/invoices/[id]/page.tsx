@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Edit, Printer } from "lucide-react";
 import { InvoiceInterface } from "@/lib/interfaces";
 
-export default function InvoicePage({ params }: { params: { id: string } }) {
+export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
 	
   const [invoice, setInvoice] = useState<InvoiceInterface | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,6 +70,11 @@ export default function InvoicePage({ params }: { params: { id: string } }) {
           <Printer className="w-4 h-4 mr-2" />
           Print PDF
         </Button>
+      </div>
+      <div className="mt-4">
+        <p>Payment Received: ${invoice.paymentReceived ? parseFloat(invoice.paymentReceived.toString()).toFixed(2) : '0.00'}</p>
+        <p>Remaining Amount: ${invoice.remainingAmount ? parseFloat(invoice.remainingAmount.toString()).toFixed(2) : '0.00'}</p>
+        <p>Status: {invoice.status}</p>
       </div>
     </div>
   );
