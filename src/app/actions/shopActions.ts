@@ -13,9 +13,7 @@ export async function getShopIdForCurrentUser() {
   }
 
   try {
-    console.log('Attempting to fetch shop ID for user:', userId);
     const shopId = await getShopIdForUser(userId);
-    console.log('Shop ID fetched:', shopId);
     return shopId;
   } catch (error) {
     console.error("Error fetching shop ID:", error);

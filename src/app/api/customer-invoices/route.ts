@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { invoices, customers } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
+import { getCustomerInvoicesForUser } from '@/db/queries';
 
 /**
  * GET handler for fetching customer invoices
@@ -13,25 +12,16 @@ import { eq } from 'drizzle-orm';
  */
 export async function GET() {
   try {
-    // Query to fetch pending invoices with customer details
-    const customerInvoices = await db
-      .select({
-        id: invoices.id,
-        customerName: customers.name,
-        contactNumber: customers.phoneNumber,
-        totalAmount: invoices.totalAmount,
-        paymentReceived: invoices.paymentReceived,
-        remainingAmount: invoices.remainingAmount,
-        dueDate: invoices.dueDate,
-      })
-      .from(invoices)
-      .innerJoin(customers, eq(invoices.customerId, customers.id))
-      // .where(eq(invoices.status, 'pending'));
+    const { userId } = auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Return the fetched data as JSON response
+    const customerInvoices = await getCustomerInvoicesForUser(userId);
+
     return NextResponse.json(customerInvoices);
   } catch (error) {
-    // Log the error and return a 500 Internal Server Error response
     console.error('Error fetching customer invoices:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

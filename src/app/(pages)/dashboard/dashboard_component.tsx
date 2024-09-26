@@ -1,18 +1,23 @@
-'use client'
-import { Input } from '@/components/ui/input';
+"use client";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import debounce from 'lodash/debounce';
+import debounce from "lodash/debounce";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Printer, DollarSign, Loader2, MoreHorizontal } from "lucide-react";
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ReceivePaymentModal } from '@/components/ReceivePaymentModal';
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ReceivePaymentModal } from "@/components/ReceivePaymentModal";
 
 interface SearchResult {
-  type: 'customer' | 'product' | 'invoice';
+  type: "customer" | "product" | "invoice";
   id: number;
   name: string;
 }
@@ -21,12 +26,14 @@ interface CustomerInvoice {
   id: number;
   customerName: string;
   contactNumber: string;
-  amountDue: number;
+  totalAmount: string;
+  paymentReceived: string;
+  remainingAmount: string;
   dueDate: string;
 }
 
 export default function DashboardComponent() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -35,28 +42,31 @@ export default function DashboardComponent() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<CustomerInvoice | null>(null);
 
-  const handleSearch = useCallback(async (term: string) => {
-    if (!term.trim()) {
-      setSearchResults([]);
-      return;
-    }
+  const handleSearch = useCallback(
+    async (term: string) => {
+      if (!term.trim()) {
+        setSearchResults([]);
+        return;
+      }
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/search?term=${encodeURIComponent(term)}`);
-      if (!response.ok) throw new Error('Failed to fetch search results');
-      const data = await response.json();
-      setSearchResults(data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch search results. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/search?term=${encodeURIComponent(term)}`);
+        if (!response.ok) throw new Error("Failed to fetch search results");
+        const data = await response.json();
+        setSearchResults(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch search results. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
 
   const debouncedSearch = useCallback(debounce(handleSearch, 300), [handleSearch]);
 
@@ -69,13 +79,13 @@ export default function DashboardComponent() {
 
   const handleResultClick = (result: SearchResult) => {
     switch (result.type) {
-      case 'customer':
+      case "customer":
         router.push(`/customers/edit/${result.id}`);
         break;
-      case 'product':
+      case "product":
         router.push(`/products/edit/${result.id}`);
         break;
-      case 'invoice':
+      case "invoice":
         router.push(`/invoices/${result.id}`);
         break;
     }
@@ -83,12 +93,12 @@ export default function DashboardComponent() {
 
   const fetchCustomerInvoices = async () => {
     try {
-      const response = await fetch('/api/customer-invoices');
-      if (!response.ok) throw new Error('Failed to fetch customer invoices');
-      const data = await response.json();
+      const response = await fetch("/api/customer-invoices");
+      if (!response.ok) throw new Error("Failed to fetch customer invoices");
+      const data: CustomerInvoice[] = await response.json();
       setCustomerInvoices(data);
     } catch (error) {
-      console.error('Error fetching customer invoices:', error);
+      console.error("Error fetching customer invoices:", error);
       toast({
         title: "Error",
         description: "Failed to fetch customer invoices. Please try again.",
@@ -111,14 +121,14 @@ export default function DashboardComponent() {
 
     try {
       const response = await fetch(`/api/invoices/${selectedInvoice.id}/receive-payment`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ amount }),
       });
 
-      if (!response.ok) throw new Error('Failed to process payment');
+      if (!response.ok) throw new Error("Failed to process payment");
 
       setIsPaymentModalOpen(false);
       fetchCustomerInvoices(); // Now this function is defined
@@ -128,7 +138,7 @@ export default function DashboardComponent() {
         variant: "default",
       });
     } catch (error) {
-      console.error('Error processing payment:', error);
+      console.error("Error processing payment:", error);
       toast({
         title: "Error",
         description: "Failed to process payment. Please try again.",
@@ -140,7 +150,7 @@ export default function DashboardComponent() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-      
+
       <div className="mb-6">
         <div className="flex space-x-2 items-center">
           <div className="relative flex-grow">
@@ -163,7 +173,7 @@ export default function DashboardComponent() {
             <h2 className="text-xl font-semibold mb-2">Search Results</h2>
             <ul className="space-y-2">
               {searchResults.map((result) => (
-                <li 
+                <li
                   key={`${result.type}-${result.id}`}
                   className="cursor-pointer p-2 hover:bg-gray-100 rounded"
                   onClick={() => handleResultClick(result)}
@@ -184,6 +194,7 @@ export default function DashboardComponent() {
               <TableHead>S#</TableHead>
               <TableHead>Customer Name</TableHead>
               <TableHead>Contact Number</TableHead>
+              <TableHead>Total Amount</TableHead>
               <TableHead>Amount Due</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Actions</TableHead>
@@ -195,7 +206,8 @@ export default function DashboardComponent() {
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{invoice.customerName}</TableCell>
                 <TableCell>{invoice.contactNumber}</TableCell>
-                <TableCell>${invoice.amountDue ? parseFloat(invoice.amountDue.toString()).toFixed(2) : '0.00'}</TableCell>
+                <TableCell>${parseFloat(invoice.totalAmount).toFixed(2)}</TableCell>
+                <TableCell>${parseFloat(invoice.remainingAmount).toFixed(2)}</TableCell>
                 <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -238,8 +250,8 @@ export default function DashboardComponent() {
           onSubmit={handlePaymentSubmit}
           invoiceId={selectedInvoice.id}
           customerName={selectedInvoice.customerName}
-          totalAmount={parseFloat(selectedInvoice.amountDue.toString())}
-          amountDue={parseFloat(selectedInvoice.amountDue.toString())}
+          totalAmount={parseFloat(selectedInvoice.totalAmount.toString())}
+          amountDue={parseFloat(selectedInvoice.remainingAmount.toString())}
         />
       )}
     </div>

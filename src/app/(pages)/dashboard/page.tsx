@@ -33,19 +33,28 @@ export default function DashboardPage() {
 
   const checkUserShop = async () => {
     try {
+      const storedHasShop = localStorage.getItem('hasShop');
+      if (storedHasShop !== null) {
+        setHasShop(storedHasShop === 'true');
+        if (storedHasShop === 'false') {
+          router.push('/onboarding');
+        }
+        return;
+      }
+
       const response = await fetch('/api/user-shop');
-      console.log('---------------------------------------------------');
-      console.log('response of user shop', response);
-      console.log('---------------------------------------------------');
       if (response.ok) {
         setHasShop(true);
+        localStorage.setItem('hasShop', 'true');
       } else {
         setHasShop(false);
+        localStorage.setItem('hasShop', 'false');
         router.push('/onboarding');
       }
     } catch (error) {
       console.error('Error checking user shop:', error);
       setHasShop(false);
+      localStorage.setItem('hasShop', 'false');
       router.push('/onboarding');
     }
   };

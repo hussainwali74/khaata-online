@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="md:hidden sm:block">
         <MobileNavbar />
       </div>
-      <main className={userId ? "pt-2 lg:pt-1 mb-2 lg:mt-16  lg:mb-0 container mx-auto" : ""}>{children}</main>
+      <main className={userId ? "pt-2 lg:pt-1 mb-2 lg:mt-20  lg:mb-0 container mx-auto" : ""}>{children}</main>
       <Toaster />
     </>
   );

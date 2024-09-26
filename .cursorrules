@@ -13,12 +13,15 @@
             <Feature>Dark mode toggle for better user experience</Feature>
         </Features>
     </Overview>
+
     <TechStack>
         <Frontend>
             <Technology>React</Technology>
             <Technology>Next.js</Technology>
             <Technology>TypeScript</Technology>
             <Technology>Tailwind CSS</Technology>
+            <Technology>Shadcn UI</Technology>
+            <Technology>Lucide Icons</Technology>
         </Frontend>
         <Backend>
             <Technology>Node.js</Technology>
@@ -29,6 +32,8 @@
             <Technology>ESLint</Technology>
             <Technology>Prettier</Technology>
             <Technology>Vercel</Technology>
+            <Technology>Clerk</Technology>
+
         </Tools>
     </TechStack>
     <RelevantFiles>
@@ -122,6 +127,23 @@
         <File name="tailwind.config.ts" />
         <File name="tsconfig.json" />
     </FolderStructure>
+        <DevelopmentGuideLines>
+        <GuideLine>
+            Using shadcn ui components for styling and layout
+        </GuideLine>
+        <GuideLine>
+            Using lucide icons for icons
+        </GuideLine>
+        <GuideLine>
+            Using shadcn ui useToast for showing Error, Warning, Loading and Success messages
+        </GuideLine>
+        <GuideLine>Using Clerk for authentication</GuideLine>
+        <GuideLine>Using Drizzle ORM for database</GuideLine>
+        <GuideLine>Using Server Actions for API calls</GuideLine>
+        <GuideLine> Use TypeScript for type safety</GuideLine>
+        <GuideLine> Use Next.js for server actions</GuideLine>
+        
+    </DevelopmentGuideLines>
     <Tasks>
         
         <Task> Add Unit testing and add first test case just to make sure testing setup is working</Task>
