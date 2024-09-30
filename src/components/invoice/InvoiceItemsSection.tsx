@@ -7,16 +7,45 @@ import { InvoiceInterface, InvoiceItemInterface } from "@/lib/interfaces";
 import { productsSchema } from "@/db/schema";
 
 interface InvoiceItemsSectionProps {
-    invoice: InvoiceInterface;
-    setInvoice: React.Dispatch<React.SetStateAction<InvoiceInterface | null>>;
-    products: typeof productsSchema.$inferSelect[];
-    updateItem: (index: number, field: keyof InvoiceItemInterface, value: number | string) => void;
-    addItem: () => void;
-    removeItem: (index: number) => void;
+  invoice: InvoiceInterface;
+  setInvoice: React.Dispatch<React.SetStateAction<InvoiceInterface | null>>;
+  products: (typeof productsSchema.$inferSelect)[];
+  updateItem: (index: number, field: keyof InvoiceItemInterface, value: number | string) => void;
+  addItem: () => void;
+  removeItem: (index: number) => void;
 }
 
-export default function InvoiceItemsSection({ invoice, setInvoice, products, updateItem, addItem, removeItem }: InvoiceItemsSectionProps) {
-    return (
+export default function InvoiceItemsSection({
+  invoice,
+  setInvoice,
+  products,
+  updateItem,
+  addItem,
+  removeItem,
+}: InvoiceItemsSectionProps) {
+  const handleProductChange = (index: number, productId: number) => {
+    const selectedProduct = products.find((p) => p.id === productId);
+
+    if (selectedProduct) {
+      setInvoice((prevInvoice) => {
+        if (!prevInvoice) return null;
+
+        const updatedItems = [...prevInvoice.items];
+        updatedItems[index] = {
+          ...updatedItems[index],
+          productId: productId,
+          productDescription: selectedProduct.description || "",
+          price: parseFloat(selectedProduct.price.toString()),
+          productName: selectedProduct.name,
+          lineTotal: updatedItems[index].quantity * parseFloat(selectedProduct.price.toString()),
+        };
+
+        return { ...prevInvoice, items: updatedItems };
+      });
+    }
+  };
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle>Invoice Items</CardTitle>
@@ -26,7 +55,7 @@ export default function InvoiceItemsSection({ invoice, setInvoice, products, upd
           {invoice.items.map((item, index) => (
             <div key={index} className="flex items-center space-x-2">
               <Select
-                onValueChange={(value) => updateItem(index, "productId", parseInt(value))}
+                onValueChange={(value) => handleProductChange(index, parseInt(value))}
                 value={item.productId.toString()}
               >
                 <SelectTrigger className="w-3/4">
@@ -54,6 +83,7 @@ export default function InvoiceItemsSection({ invoice, setInvoice, products, upd
                 onChange={(e) => updateItem(index, "price", parseFloat(e.target.value))}
                 className="w-24"
                 placeholder="Price"
+                readOnly
               />
               <Button type="button" variant="destructive" size="icon" onClick={() => removeItem(index)}>
                 <Trash2 className="h-4 w-4" />

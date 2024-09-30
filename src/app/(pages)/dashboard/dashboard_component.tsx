@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ReceivePaymentModal } from "@/components/ReceivePaymentModal";
+import { Badge } from "@/components/ui/badge";
+import { getStatusColor } from "@/utils/helpers";
 
 interface SearchResult {
   type: "customer" | "product" | "invoice";
@@ -30,6 +32,7 @@ interface CustomerInvoice {
   paymentReceived: string;
   remainingAmount: string;
   dueDate: string;
+  status: 'Paid' | 'Overdue' | 'Pending';
 }
 
 export default function DashboardComponent() {
@@ -146,6 +149,10 @@ export default function DashboardComponent() {
       });
     }
   };
+  const handlePrintInvoice = (invoiceId: number) => {
+    router.push(`/invoices/${invoiceId}`);
+  };  
+
 
   return (
     <div className="container mx-auto p-4">
@@ -186,7 +193,7 @@ export default function DashboardComponent() {
         )}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 overflow-x-auto">
         <h2 className="text-2xl font-semibold mb-4">Customer Invoices</h2>
         <Table>
           <TableHeader>
@@ -197,6 +204,7 @@ export default function DashboardComponent() {
               <TableHead>Total Amount</TableHead>
               <TableHead>Amount Due</TableHead>
               <TableHead>Due Date</TableHead>
+              <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -209,6 +217,11 @@ export default function DashboardComponent() {
                 <TableCell>${parseFloat(invoice.totalAmount).toFixed(2)}</TableCell>
                 <TableCell>${parseFloat(invoice.remainingAmount).toFixed(2)}</TableCell>
                 <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <Badge className={getStatusColor(invoice.status)}>
+                    {invoice.status}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -218,21 +231,21 @@ export default function DashboardComponent() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleReceivePayment(invoice)}>
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        <span>Receive Payment</span>
-                      </DropdownMenuItem>
+                      {invoice.status !== 'Paid' && (
+                        <DropdownMenuItem onClick={() => handleReceivePayment(invoice)}>
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          <span>Receive Payment</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem>
                         <Link href={`/invoices/edit/${invoice.id}`} className="flex items-center">
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link href={`/invoices/${invoice.id}`} className="flex items-center">
+                      <DropdownMenuItem onClick={() => handlePrintInvoice(invoice.id)}>
                           <Printer className="mr-2 h-4 w-4" />
                           <span>Print</span>
-                        </Link>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

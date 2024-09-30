@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { invoices } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from "@clerk/nextjs/server";
+import { calculateInvoiceStatus } from "@/lib/invoiceHelpers";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
 	const { userId } = auth();
@@ -15,19 +16,19 @@ export async function POST(request: Request, { params }: { params: { id: string 
 	const { amount } = body;
 
 	try {
-		// Fetch the current invoice
 		const [invoice] = await db.select().from(invoices).where(eq(invoices.id, invoiceId));
 
 		if (!invoice) {
 			return new NextResponse("Invoice not found", { status: 404 });
 		}
 
-		// Calculate new values
-		const newPaymentReceived = parseFloat(invoice?.paymentReceived || '0') + amount;
+		const newPaymentReceived = parseFloat(invoice.paymentReceived || '0') + amount;
 		const newRemainingAmount = parseFloat(invoice.totalAmount) - newPaymentReceived;
-		const newStatus = newRemainingAmount <= 0 ? 'paid' : 'partial';
+		
+		// Use current date if dueDate is null
+		const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : new Date();
+		const newStatus = calculateInvoiceStatus(parseFloat(invoice.totalAmount), newPaymentReceived, dueDate);
 
-		// Update the invoice
 		const [updatedInvoice] = await db.update(invoices)
 			.set({
 				paymentReceived: newPaymentReceived.toString(),

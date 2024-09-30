@@ -75,68 +75,42 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const invoiceId = parseInt(params.id);
-  const body = await request.json();
-  console.log("---------------------------------------------------");
-  console.log("body", body);
-  console.log("---------------------------------------------------");
-  const { customerId, status, items, shopId, discountAmount, dueDate, discountPercentage, paymentReceived, remainingAmount, totalAmount } = body;
-
   try {
-    const dueDateObject = dueDate ? new Date(dueDate) : null;
-    const calculatedStatus = calculateInvoiceStatus(parseFloat(totalAmount), parseFloat(paymentReceived));
+    const body = await request.json();
+    const { totalAmount, paymentReceived, remainingAmount, discountAmount, discountPercentage, dueDate, items } = body;
 
-    // Update the invoice
-    await db
-      .update(invoices)
+    const status = calculateInvoiceStatus(totalAmount, paymentReceived, new Date(dueDate));
+
+    const [updatedInvoice] = await db.update(invoices)
       .set({
-        customerId,
-        status: calculatedStatus,
-        discountPercentage,
-        discountAmount,
-        dueDate: dueDateObject,
-        shopId,
+        totalAmount,
         paymentReceived,
         remainingAmount,
-        totalAmount,
+        discountAmount,
+        discountPercentage,
+        dueDate: new Date(dueDate),
+        status,
+        updatedAt: new Date(),
       })
-      .where(eq(invoices.id, invoiceId))
-      .execute();
+      .where(eq(invoices.id, parseInt(params.id)))
+      .returning();
 
-    // Delete existing items
-    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId)).execute();
-
-    // Add new items
-    let calculatedTotalAmount = 0;
+    // Update invoice items (you may need to implement a more sophisticated logic here)
+    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, updatedInvoice.id));
     for (const item of items) {
-      const [product] = await db.select().from(productsSchema).where(eq(productsSchema.id, item.productId));
-      if (!product) {
-        throw new Error(`Product with id ${item.productId} not found`);
-      }
-
       await db.insert(invoiceItems).values({
-        invoiceId,
+        invoiceId: updatedInvoice.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.price.toString(),
+        unitPrice: item.price,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
-
-      calculatedTotalAmount += item.price * item.quantity;
     }
-
-    // Calculate discounted total
-    const discountedTotal = calculatedTotalAmount - (parseFloat(discountAmount) || 0);
-
-    // Update the invoice total amount
-    const [updatedInvoice] = await db
-      .update(invoices)
-      .set({ totalAmount: discountedTotal.toString() })
-      .where(eq(invoices.id, invoiceId))
-      .returning();
 
     return NextResponse.json(updatedInvoice);
   } catch (error) {
-    console.error("Error updating invoice:", error);
+    console.error('Error updating invoice:', error);
     return new NextResponse("Error updating invoice", { status: 500 });
   }
 }

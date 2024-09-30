@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, decimal, integer, doublePrecision, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, decimal, integer, varchar } from "drizzle-orm/pg-core";
 
 export const shops = pgTable("shops", {
   id: serial("id").primaryKey(),
@@ -63,7 +63,7 @@ export const invoices = pgTable("invoices", {
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
   discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default('0'),
   dueDate: timestamp("due_date"),
-  status: text("status").notNull().default('pending'),
+  status: varchar("status", { length: 20 }).notNull().default('pending'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

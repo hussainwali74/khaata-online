@@ -1,6 +1,6 @@
 {
-  "id": "e739b388-923f-4dfb-aff8-dec226640590",
-  "prevId": "621acb0a-0c4f-45a7-af2e-d7ba91db95d9",
+  "id": "5d72d095-d526-4d46-a82f-cec286ec89f8",
+  "prevId": "210512ae-c9f8-4940-ae3a-dea27f4572be",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -181,19 +181,39 @@
           "primaryKey": false,
           "notNull": true
         },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_received": {
+          "name": "payment_received",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "remaining_amount": {
+          "name": "remaining_amount",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
         "discount_amount": {
           "name": "discount_amount",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": false,
-          "default": "'0.0'"
+          "default": "'0'"
         },
         "discount_percentage": {
           "name": "discount_percentage",
-          "type": "numeric(10, 2)",
+          "type": "numeric(5, 2)",
           "primaryKey": false,
           "notNull": false,
-          "default": "'0.0'"
+          "default": "'0'"
         },
         "due_date": {
           "name": "due_date",
@@ -201,15 +221,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "total_amount": {
-          "name": "total_amount",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"

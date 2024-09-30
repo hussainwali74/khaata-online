@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Save, ArrowLeft, Plus, Minus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getShopIdForCurrentUser } from "@/app/actions/shopActions";
+import { calculateInvoiceStatus } from "@/lib/invoiceHelpers";
 
 interface Customer {
   id: number;
@@ -23,13 +24,17 @@ interface Product {
 interface InvoiceItem {
   productId: number;
   quantity: number;
+  price: number;
 }
 
 export default function CreateInvoicePage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
-  const [items, setItems] = useState<InvoiceItem[]>([{ productId: 0, quantity: 1 }]);
+  const [items, setItems] = useState<InvoiceItem[]>([{ productId: 0, quantity: 1, price: 0 }]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [paymentReceived, setPaymentReceived] = useState<number>(0);
+  const [dueDate, setDueDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -40,6 +45,10 @@ export default function CreateInvoicePage() {
     fetchProducts();
     fetchShopId();
   }, []);
+
+  useEffect(() => {
+    calculateTotalAmount();
+  }, [items]);
 
   const fetchCustomers = async () => {
     try {
@@ -78,7 +87,7 @@ export default function CreateInvoicePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: 0, quantity: 1 }]);
+    setItems([...items, { productId: 0, quantity: 1, price: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -88,36 +97,65 @@ export default function CreateInvoicePage() {
   const updateItem = (index: number, field: keyof InvoiceItem, value: number) => {
     const newItems = [...items];
     newItems[index][field] = value;
+    if (field === 'productId') {
+      const selectedProduct = products.find(p => p.id === value);
+      if (selectedProduct) {
+        newItems[index].price = parseFloat(selectedProduct.price);
+      }
+    }
     setItems(newItems);
+  };
+
+  const calculateTotalAmount = () => {
+    const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    setTotalAmount(total);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shopId) {
-      toast({ title: "Error", description: "Shop ID not available", variant: "destructive" });
-      return;
-    }
     setIsLoading(true);
+
     try {
+      const status = calculateInvoiceStatus(
+        totalAmount,
+        paymentReceived,
+        new Date(dueDate)
+      );
+
       const response = await fetch("/api/invoices", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          customerId: parseInt(selectedCustomerId),
-          shopId: shopId,
-          items: items
-            .filter((item) => item.productId !== 0)
-            .map((item) => ({
-              ...item,
-              productId: parseInt(item.productId.toString()),
-            })),
+          customerId: selectedCustomerId,
+          totalAmount,
+          paymentReceived,
+          remainingAmount: totalAmount - paymentReceived,
+          discountAmount: 0, // You may want to add discount functionality later
+          discountPercentage: 0, // You may want to add discount functionality later
+          dueDate,
+          items,
+          status,
         }),
       });
-      if (!response.ok) throw new Error("Failed to create invoice");
-      toast({ title: "Success", description: "Invoice created successfully" });
+
+      if (!response.ok) {
+        throw new Error("Failed to create invoice");
+      }
+
+      toast({
+        title: "Success",
+        description: "Invoice created successfully",
+      });
       router.push("/invoices");
     } catch (error) {
-      toast({ title: "Error", description: "Failed to create invoice", variant: "destructive" });
+      console.error("Error creating invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create invoice. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +188,7 @@ export default function CreateInvoicePage() {
         </div>
         <div>
           <h2 className="text-lg font-semibold mb-2">Invoice Items</h2>
-          {items?.map((item, index) => (
+          {items.map((item, index) => (
             <div key={index} className="flex items-center space-x-2 mb-2">
               <Select
                 onValueChange={(value) => updateItem(index, "productId", parseInt(value))}
@@ -160,8 +198,8 @@ export default function CreateInvoicePage() {
                   <SelectValue placeholder="Select a product" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products?.length > 0 ? (
-                    products?.map((product) => (
+                  {products.length > 0 ? (
+                    products.map((product) => (
                       <SelectItem key={product.id} value={product.id.toString()}>
                         {product.name} - ${parseFloat(product.price).toFixed(2)}
                       </SelectItem>
@@ -187,6 +225,31 @@ export default function CreateInvoicePage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
+        </div>
+        <div>
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
+            Due Date
+          </label>
+          <Input
+            type="date"
+            id="dueDate"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="paymentReceived" className="block text-sm font-medium text-gray-700">
+            Payment Received
+          </label>
+          <Input
+            type="number"
+            id="paymentReceived"
+            value={paymentReceived}
+            onChange={(e) => setPaymentReceived(parseFloat(e.target.value))}
+          />
+        </div>
+        <div>
+          <p className="text-lg font-semibold">Total Amount: ${totalAmount.toFixed(2)}</p>
         </div>
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={() => router.push("/invoices")}>

@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Search from "@/components/Search";
 import Pagination from "@/components/Pagination";
+import { Badge } from "@/components/ui/badge";
+import { getStatusColor } from "@/utils/helpers";
 
 interface Invoice {
   id: number;
@@ -51,9 +53,6 @@ export default function InvoicesPage() {
         );
         if (!response.ok) throw new Error("Failed to fetch invoices");
         const data = await response.json();
-        console.log("---------------------------------------------------");
-        console.log("data invoices", data);
-        console.log("---------------------------------------------------");
         setInvoices(data);
         setTotalPages(data.totalPages);
       } catch (error) {
@@ -125,7 +124,7 @@ export default function InvoicesPage() {
       <div className="flex-grow overflow-hidden">
         <div className="h-full overflow-auto">
           {isLoading ? (
-            <div className="flex justify-center items-center h-full">
+            <div className="flex justify-center items-center h-full mt-10">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
@@ -148,7 +147,11 @@ export default function InvoicesPage() {
                         <TableCell>{invoice.id}</TableCell>
                         <TableCell>{invoice.customerName}</TableCell>
                         <TableCell>${parseFloat(invoice.totalAmount.toString()).toFixed(2)}</TableCell>
-                        <TableCell>{invoice.status}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge className={getStatusColor(invoice.status)}>
+                            {invoice.status}
+                          </Badge>
+                        </TableCell>
                         <TableCell>{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -184,7 +187,7 @@ export default function InvoicesPage() {
         </div>
       </div>
       {!isLoading && (
-        <Pagination
+        <Pagination 
           currentPage={currentPage}
           totalPages={totalPages}
           itemsPerPage={itemsPerPage}

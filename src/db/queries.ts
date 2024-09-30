@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq} from "drizzle-orm";
 import { db } from ".";
 import { shopAdmins, customers, invoices, shops } from "./schema";
 
@@ -34,6 +34,7 @@ export async function getCustomerInvoicesForUser(userId: string) {
         paymentReceived: invoices.paymentReceived,
         remainingAmount: invoices.remainingAmount,
         dueDate: invoices.dueDate,
+        status: invoices.status,
       })
       .from(invoices)
       .innerJoin(customers, eq(invoices.customerId, customers.id))

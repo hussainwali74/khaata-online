@@ -101,50 +101,9 @@ export default function EditInvoicePage({ params }: { params: { id: string } }) 
     }
   };
 
-  const calculateSubtotal = () => {
-    return invoice?.items.reduce((acc: number, item: InvoiceItemInterface) => acc + item.price * item.quantity, 0) || 0;
-  };
-
-  const handleDiscountAmountChange = (amount: number) => {
-    const subtotal = calculateSubtotal();
-    setDiscountAmount(amount);
-    setDiscountPercentage(subtotal > 0 ? (amount / subtotal) * 100 : 0);
-  };
-
-  const handleDiscountPercentageChange = (percentage: number) => {
-    const subtotal = calculateSubtotal();
-    setDiscountPercentage(percentage);
-    setDiscountAmount((percentage / 100) * subtotal);
-  };
-
-  const updateItem = (index: number, field: keyof InvoiceItemInterface, value: number | string) => {
-    if (!invoice) return;
-    const newItems = [...invoice.items];
-    if (field === "productId") {
-      const product = products.find((p) => p.id === Number(value));
-      newItems[index] = {
-        ...newItems[index],
-        [field]: Number(value),
-        productName: product?.name || "",
-        price: product ? parseFloat(product.price.toString()) : 0,
-        productDescription: product?.description || "",
-      };
-    } else {
-      newItems[index] = { ...newItems[index], [field]: Number(value) };
-    }
-
-    newItems[index].lineTotal = newItems[index].quantity * newItems[index].price;
-
-    setInvoice({ ...invoice, items: newItems });
-
-    // Recalculate discounts
-    const newSubtotal = newItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    setDiscountAmount((discountPercentage / 100) * newSubtotal);
-  };
-
   const calculateGrossTotal = () => {
-
-    return invoice?.items.reduce((acc: number, item: InvoiceItemInterface) => acc + item.price * item.quantity, 0) || 0;
+    if (!invoice) return 0;
+    return invoice.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   };
 
   const calculateNetTotal = () => {
@@ -157,6 +116,16 @@ export default function EditInvoicePage({ params }: { params: { id: string } }) 
     return total - paymentReceived;
   };
 
+  const handleDiscountAmountChange = (value: number) => {
+    setDiscountAmount(value);
+    setDiscountPercentage((value / calculateGrossTotal()) * 100);
+  };
+
+  const handleDiscountPercentageChange = (value: number) => {
+    setDiscountPercentage(value);
+    setDiscountAmount((value / 100) * calculateGrossTotal());
+  };
+
   const handlePaymentReceivedChange = (value: number) => {
     setPaymentReceived(value);
   };
@@ -166,39 +135,79 @@ export default function EditInvoicePage({ params }: { params: { id: string } }) 
     setPaymentReceived(totalAmount);
   };
 
+  const updateItem = (index: number, field: keyof InvoiceItemInterface, value: any) => {
+    if (!invoice) return;
+    const updatedItems = [...invoice.items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
+      lineTotal: field === 'quantity' || field === 'price' 
+        ? updatedItems[index].quantity * updatedItems[index].price
+        : updatedItems[index].lineTotal
+    };
+    setInvoice(prevInvoice =>{
+      if (!prevInvoice) return null;
+
+      const updateItems = [...prevInvoice.items];
+      updateItems[index] = {
+        ...updateItems[index],
+        [field]: value}
+      if (field === 'quantity' || field === 'price') {
+        updateItems[index].lineTotal = updateItems[index].quantity * updateItems[index].price;
+      }
+      return { ...prevInvoice, items: updateItems };
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shopId || !invoice) {
-      toast({ title: "Error", description: "Missing shop ID or invoice data", variant: "destructive" });
-      return;
-    }
     setIsSubmitting(true);
+
     try {
-      const totalAmount = calculateNetTotal();
-      const remainingAmount = calculateRemainingAmount();
-      const status = calculateInvoiceStatus(totalAmount, paymentReceived);
-      const body = JSON.stringify({
+      if (!invoice) throw new Error("No invoice data");
+
+      const status = calculateInvoiceStatus(
+        calculateNetTotal(),
+        paymentReceived,
+        new Date(dueDate)
+      );
+
+      const updatedInvoice = {
+        ...invoice,
         customerId: parseInt(selectedCustomerId),
-        shopId: shopId,
-        status: status,
-        discountAmount: discountAmount,
-        discountPercentage: discountPercentage,
-        dueDate: dueDate,
-        items: invoice.items,
-        paymentReceived: paymentReceived,
-        remainingAmount: remainingAmount,
-        totalAmount: totalAmount,
-      });
+        totalAmount: calculateNetTotal().toString(),
+        paymentReceived: paymentReceived.toString(),
+        remainingAmount: calculateRemainingAmount().toString(),
+        discountAmount: discountAmount.toString(),
+        discountPercentage: discountPercentage.toString(),
+        dueDate,
+        status,
+      };
+
       const response = await fetch(`/api/invoices/${params.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: body,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedInvoice),
       });
-      if (!response.ok) throw new Error("Failed to update invoice");
-      toast({ title: "Success", description: "Invoice updated successfully" });
-      // router.push(`/invoices/${params.id}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to update invoice");
+      }
+
+      toast({
+        title: "Success",
+        description: "Invoice updated successfully",
+      });
+      router.push("/invoices");
     } catch (error) {
-      toast({ title: "Error", description: "Failed to update invoice", variant: "destructive" });
+      console.error("Error updating invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update invoice. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -270,7 +279,7 @@ export default function EditInvoicePage({ params }: { params: { id: string } }) 
         />
         <PaymentSection
           paymentReceived={paymentReceived}
-          setPaymentReceived={setPaymentReceived}
+          setPaymentReceived={handlePaymentReceivedChange}
           calculateRemainingAmount={calculateRemainingAmount}
           handleFullPayment={handleFullPayment}
         />
