@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { productsSchema } from "@/db/schema"; 
+import { productsSchema } from "@/db/schema";
 
 import { eq, ilike, or, desc, asc, sql } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
+import { getShopIdForUser } from "@/db/queries";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,13 +13,21 @@ export async function GET(request: Request) {
   const search = searchParams.get("search") || "";
   const sortField = searchParams.get("sortField") as keyof typeof productsSchema | null;
   const sortOrder = searchParams.get("sortOrder") as "asc" | "desc" | null;
+  const { userId } = auth();
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+  const shopId = await getShopIdForUser(userId);
+  if (!shopId) {
+    return new NextResponse("Shop not found", { status: 404 });
+  }
 
   const offset = (page - 1) * limit;
 
   try {
-    let query = db.select().from(productsSchema);
+    let query = db.select().from(productsSchema) ;
     let orderBy: any[] = [];
-
+    query = query.where(eq(productsSchema.shopId, shopId)) as typeof query;
     if (search) {
       const searchLower = search.toLowerCase();
       query = query.where(
@@ -58,7 +67,7 @@ export async function GET(request: Request) {
         .where(
           search
             ? or(
-                  ilike(productsSchema.name, `%${search.toLowerCase()}%`),
+                ilike(productsSchema.name, `%${search.toLowerCase()}%`),
                 ilike(productsSchema.description, `%${search.toLowerCase()}%`)
               )
             : undefined

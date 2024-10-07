@@ -46,7 +46,7 @@ export default function InvoiceDetailsSection({
                             value={discountPercentage.toFixed(2)}
                             onChange={(e) => handleDiscountPercentageChange(Number(e.target.value))}
                             min="0"
-                            step="0.01"
+                            step="0.1"
                             max="100"
                         />
                     </div>
@@ -55,6 +55,7 @@ export default function InvoiceDetailsSection({
                         <Input
                             type="number"
                             id="discountAmount"
+                            step={1}
                             value={discountAmount.toFixed(2)}
                             onChange={(e) => handleDiscountAmountChange(Number(e.target.value))}
                         />

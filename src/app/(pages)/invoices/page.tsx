@@ -127,6 +127,10 @@ export default function InvoicesPage() {
             <div className="flex justify-center items-center h-full mt-10">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
+          ) : invoices.length === 0 ? (
+            <div className="flex justify-center items-center h-full mt-10">
+              <p className="text-gray-500 text-lg">No invoices available yet.</p>
+            </div>
           ) : (
             <div className="container mx-auto p-4">
               <div className="overflow-x-auto">
@@ -186,7 +190,7 @@ export default function InvoicesPage() {
           )}
         </div>
       </div>
-      {!isLoading && (
+      {!isLoading && invoices.length > 0 && (
         <Pagination 
           currentPage={currentPage}
           totalPages={totalPages}
